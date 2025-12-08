@@ -112,7 +112,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     width: 60,
                     height: 60,
                     decoration: BoxDecoration(
-                      color: Colors.blueAccent,
+
+                      color: Theme.of(context).primaryColor,
                       borderRadius: BorderRadius.circular(16),
                       boxShadow: [
                         BoxShadow(
@@ -244,8 +245,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     child: ElevatedButton(
                       onPressed: _isLoading ? null : _onRegisterPressed,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.blueAccent,
-                         disabledBackgroundColor: Colors.blueAccent.withValues(alpha: 0.5),
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(30),
@@ -287,11 +286,12 @@ class _RegisterScreenState extends State<RegisterScreen> {
                              Navigator.pushReplacementNamed(context, AppRoutes.login);
                           }
                         },
-                        child: const Text(
+                        child: Text(
                           'Sign In',
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
-                            color: Colors.blueAccent,
+      
+                            color: Theme.of(context).primaryColor,
                             fontSize: 14,
                           ),
                         ),

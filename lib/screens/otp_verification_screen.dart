@@ -247,7 +247,6 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
     }
 
     return Scaffold(
-      backgroundColor: Colors.blue[50], 
       body: Center(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24),
@@ -267,7 +266,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(Icons.mark_email_read, size: 60, color: Colors.blue[800]),
+                Icon(Icons.mark_email_read, size: 60, color: Theme.of(context).primaryColor),
                 const SizedBox(height: 24),
                 
                 const Text(
@@ -311,7 +310,6 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                   child: ElevatedButton(
                     onPressed: _isLoading ? null : _verifyOtp,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: const Color(0xFF29B6F6),
                       padding: const EdgeInsets.symmetric(vertical: 16),
                        shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
@@ -332,7 +330,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                   child: Text(
                     _canResend ? 'Resend Code' : 'Resend Code in ${_start}s',
                     style: TextStyle(
-                      color: _canResend ? Colors.blue[800] : Colors.grey,
+                      color: _canResend ? Theme.of(context).primaryColor : Colors.grey,
                       fontWeight: FontWeight.w600,
                     ),
                   ),

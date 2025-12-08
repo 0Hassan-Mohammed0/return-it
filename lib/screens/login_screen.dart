@@ -163,10 +163,10 @@ class _LoginScreenState extends State<LoginScreen> {
                       onPressed: () {
                          Navigator.pushNamed(context, AppRoutes.forgotPassword);
                       },
-                      child: const Text(
+                      child: Text(
                         'Forgot Password?',
                         style: TextStyle(
-                          color: Colors.blueAccent,
+                          color: Theme.of(context).primaryColor,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -178,8 +178,6 @@ class _LoginScreenState extends State<LoginScreen> {
                     child: ElevatedButton(
                       onPressed: _isLoading ? null : _login,
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.blueAccent,
-                        disabledBackgroundColor: Colors.blueAccent.withValues(alpha: 0.5),
                         padding: const EdgeInsets.symmetric(vertical: 16),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
@@ -210,11 +208,12 @@ class _LoginScreenState extends State<LoginScreen> {
                         onPressed: () {
                           Navigator.pushNamed(context, AppRoutes.register);
                         },
-                        child: const Text(
+                        child: Text(
                           'Sign Up',
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
-                            color: Colors.blueAccent,
+  
+                            color: Theme.of(context).primaryColor,
                           ),
                         ),
                       ),

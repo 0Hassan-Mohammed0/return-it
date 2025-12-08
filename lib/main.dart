@@ -39,25 +39,48 @@ class MainApp extends StatelessWidget {
       title: 'ReturnIt',
       theme: ThemeData(
         useMaterial3: true,
+        scaffoldBackgroundColor: Colors.white, // Standard clean background
         colorScheme: ColorScheme.fromSeed(
-          seedColor: Colors.blueAccent,
-          primary: Colors.blueAccent,
-          secondary: Colors.tealAccent,
+          seedColor: const Color(0xFF000B58), // Deep Blue
+          primary: const Color(0xFF000B58),   // #000B58
+          onPrimary: Colors.white,
+          primaryContainer: const Color(0xFF003161), // #003161
+          onPrimaryContainer: Colors.white,
+          secondary: const Color(0xFF006A67), // #006A67
+          onSecondary: Colors.white,
+          tertiary: const Color(0xFFFDEB9E),  // #FDEB9E
+          onTertiary: const Color(0xFF000B58), // Contrast against yellow
+        ),
+        appBarTheme: const AppBarTheme(
+          backgroundColor: Colors.white,
+          elevation: 0,
+          iconTheme: IconThemeData(color: Color(0xFF000B58)),
+          titleTextStyle: TextStyle(
+            color: Color(0xFF000B58), 
+            fontSize: 20, 
+            fontWeight: FontWeight.bold,
+          ),
         ),
         textTheme: GoogleFonts.interTextTheme(
           Theme.of(context).textTheme,
         ),
         inputDecorationTheme: InputDecorationTheme(
           filled: true,
-          fillColor: Colors.grey[100],
+          fillColor: const Color(0xFFFDEB9E).withValues(alpha: 0.1), // Subtle yellow tint for inputs
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
             borderSide: BorderSide.none,
           ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: const BorderSide(color: Color(0xFF000B58), width: 1.5),
+          ),
         ),
         elevatedButtonTheme: ElevatedButtonThemeData(
           style: ElevatedButton.styleFrom(
-            elevation: 0,
+            backgroundColor: const Color(0xFF000B58),
+            foregroundColor: Colors.white,
+            elevation: 2,
             shape: RoundedRectangleBorder(
               borderRadius: BorderRadius.circular(12),
             ),
