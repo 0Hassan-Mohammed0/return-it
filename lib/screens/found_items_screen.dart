@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:returnit/models/lost_item.dart';
-import 'package:returnit/screens/item_details_screen.dart';
+import 'package:returnit/models/item_model.dart';
+import 'package:returnit/pages/item_details_page.dart';
 import 'package:intl/intl.dart';
 
 class FoundItemsScreen extends StatefulWidget {
@@ -16,7 +16,7 @@ class _FoundItemsScreenState extends State<FoundItemsScreen> {
   final ScrollController _scrollController = ScrollController();
   
   // Data
-  List<LostItem> _allItems = [];
+  List<ItemModel> _allItems = [];
   bool _isLoading = false;
 
   // Filters
@@ -65,7 +65,7 @@ class _FoundItemsScreenState extends State<FoundItemsScreen> {
 
       final QuerySnapshot snapshot = await query.get();
       
-      final newItems = snapshot.docs.map((doc) => LostItem.fromFirestore(doc)).toList();
+      final newItems = snapshot.docs.map((doc) => ItemModel.fromFirestore(doc)).toList();
       
       if (mounted) {
         setState(() {
@@ -93,7 +93,7 @@ class _FoundItemsScreenState extends State<FoundItemsScreen> {
     });
   }
 
-  List<LostItem> _getFilteredItems() {
+  List<ItemModel> _getFilteredItems() {
     return _allItems.where((item) {
       // Search Query
       if (_searchQuery.isNotEmpty && !item.title.toLowerCase().contains(_searchQuery)) {
@@ -123,20 +123,20 @@ class _FoundItemsScreenState extends State<FoundItemsScreen> {
         
         switch (_selectedDate) {
           case 'Today':
-            if (item.date.isBefore(todayStart)) return false;
+            if (item.timestamp.isBefore(todayStart)) return false;
             break;
           case 'Yesterday':
              final yesterdayStart = todayStart.subtract(const Duration(days: 1));
-             if (item.date.isBefore(yesterdayStart) || item.date.isAfter(todayStart)) return false;
+             if (item.timestamp.isBefore(yesterdayStart) || item.timestamp.isAfter(todayStart)) return false;
             break;
           case 'Last 7 days':
-            if (item.date.isBefore(now.subtract(const Duration(days: 7)))) return false;
+            if (item.timestamp.isBefore(now.subtract(const Duration(days: 7)))) return false;
             break;
           case 'Last 30 days':
-             if (item.date.isBefore(now.subtract(const Duration(days: 30)))) return false;
+             if (item.timestamp.isBefore(now.subtract(const Duration(days: 30)))) return false;
             break;
           case 'Older than 30 days':
-             if (item.date.isAfter(now.subtract(const Duration(days: 30)))) return false;
+             if (item.timestamp.isAfter(now.subtract(const Duration(days: 30)))) return false;
             break;
         }
       }
@@ -391,12 +391,14 @@ class _FilterChip extends StatelessWidget {
 }
 
 class FoundItemCard extends StatelessWidget {
-  final LostItem item;
+  final ItemModel item;
 
   const FoundItemCard({super.key, required this.item});
 
   @override
   Widget build(BuildContext context) {
+    final bool claimed = item.isResolved;
+
     return Container(
       margin: const EdgeInsets.only(bottom: 16),
       decoration: BoxDecoration(
@@ -416,11 +418,10 @@ class FoundItemCard extends StatelessWidget {
         child: InkWell(
           borderRadius: BorderRadius.circular(16),
           onTap: () {
-             Navigator.push(
+             Navigator.pushNamed(
                context,
-               MaterialPageRoute(
-                 builder: (context) => ItemDetailsScreen(item: item),
-               ),
+               '/item_details',
+               arguments: item,
              );
           },
           child: Column(
@@ -434,18 +435,25 @@ class FoundItemCard extends StatelessWidget {
                     SizedBox(
                       height: 180,
                       width: double.infinity,
-                      child: Image.network(
-                        item.imageUrl,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) {
-                          return Container(
-                            color: Colors.grey[200],
-                            child: const Center(
-                              child: Icon(Icons.image_not_supported, size: 50, color: Colors.grey),
-                            ),
-                          );
-                        },
-                      ),
+                      child: item.imageUrl != null && item.imageUrl!.isNotEmpty
+                          ? Image.network(
+                              item.imageUrl!,
+                              fit: BoxFit.contain,
+                              errorBuilder: (context, error, stackTrace) {
+                                return Container(
+                                  color: Colors.grey[200],
+                                  child: const Center(
+                                    child: Icon(Icons.image_not_supported, size: 50, color: Colors.grey),
+                                  ),
+                                );
+                              },
+                            )
+                          : Container(
+                             color: Colors.grey[200],
+                             child: const Center(
+                               child: Icon(Icons.image_not_supported, size: 50, color: Colors.grey),
+                             ),
+                           ),
                     ),
                   ],
                 ),
@@ -476,7 +484,7 @@ class FoundItemCard extends StatelessWidget {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                           decoration: BoxDecoration(
-                            color: item.isClaimed ? const Color(0xFFE8F5E9) : const Color(0xFFFFEBEE),
+                            color: claimed ? const Color(0xFFE8F5E9) : const Color(0xFFFFEBEE),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Row(
@@ -484,7 +492,7 @@ class FoundItemCard extends StatelessWidget {
                               Icon(
                                 Icons.circle,
                                 size: 8,
-                                color: item.isClaimed ? const Color(0xFF4CAF50) : const Color(0xFFF44336), 
+                                color: claimed ? const Color(0xFF4CAF50) : const Color(0xFFF44336), 
                               ),
                               const SizedBox(width: 4),
                               Text(
@@ -492,7 +500,7 @@ class FoundItemCard extends StatelessWidget {
                                 style: TextStyle(
                                   fontSize: 12,
                                   fontWeight: FontWeight.bold,
-                                  color: item.isClaimed ? const Color(0xFF4CAF50) : const Color(0xFFF44336),
+                                  color: claimed ? const Color(0xFF4CAF50) : const Color(0xFFF44336),
                                 ),
                               ),
                             ],
@@ -548,7 +556,7 @@ class FoundItemCard extends StatelessWidget {
                                   Icon(Icons.calendar_today, size: 16, color: Colors.grey[600]),
                                   const SizedBox(width: 6),
                                   Text(
-                                    DateFormat('MMMM d, y').format(item.date),
+                                    DateFormat('MMMM d, y').format(item.timestamp),
                                     style: TextStyle(
                                       fontSize: 14,
                                       color: Colors.grey[600],

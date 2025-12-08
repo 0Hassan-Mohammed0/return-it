@@ -8,6 +8,9 @@ import 'package:returnit/pages/item_details_page.dart';
 import 'package:returnit/utils/theme.dart';
 import 'firebase_options.dart';
 
+import 'package:returnit/screens/lost_items_screen.dart';
+import 'package:returnit/screens/found_items_screen.dart';
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
@@ -28,9 +31,8 @@ class MyApp extends StatelessWidget {
         '/home': (context) => const HomePage(),
         '/test_db': (context) => const TestDbPage(),
         '/item_details': (context) => const ItemDetailsPage(),
-        '/lost_items': (context) => const PlaceholderPage(title: 'Lost Items'),
-        '/found_items': (context) =>
-            const PlaceholderPage(title: 'Found Items'),
+        '/lost_items': (context) => const LostItemsScreen(),
+        '/found_items': (context) => const FoundItemsScreen(),
         '/report_lost': (context) =>
             const PlaceholderPage(title: 'Report Lost Item'),
         '/report_found': (context) =>

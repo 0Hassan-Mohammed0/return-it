@@ -54,4 +54,13 @@ class ItemModel {
       isResolved: map['isResolved'] ?? false,
     );
   }
+
+  // Compatibility with merged screens
+  factory ItemModel.fromFirestore(DocumentSnapshot doc) {
+    final data = doc.data() as Map<String, dynamic>;
+    return ItemModel.fromMap(data, doc.id);
+  }
+
+  // Derived status for UI
+  String get status => isResolved ? 'Claimed' : 'Unclaimed';
 }
