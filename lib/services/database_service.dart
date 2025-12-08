@@ -34,6 +34,18 @@ class DatabaseService {
     });
   }
 
+  // Get All Items for Search (No limit, be careful with large DBs)
+  Stream<List<ItemModel>> getAllItems() {
+    return _itemsRef
+        .orderBy('timestamp', descending: true)
+        .snapshots()
+        .map((snapshot) {
+      return snapshot.docs.map((doc) {
+        return ItemModel.fromMap(doc.data() as Map<String, dynamic>, doc.id);
+      }).toList();
+    });
+  }
+
   // Add a new Item
   Future<void> addItem(ItemModel item) async {
     await _itemsRef.add(item.toMap());

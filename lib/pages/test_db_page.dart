@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:returnit/models/item_model.dart';
 import 'package:returnit/models/user_model.dart';
 import 'package:returnit/models/request_model.dart';
@@ -96,18 +97,38 @@ class _TestDbPageState extends State<TestDbPage> {
 
   Future<void> _createTestNotification() async {
     try {
+      final user = FirebaseAuth.instance.currentUser;
+      final userId = user?.uid ?? 'test_user_001';
+      
       final notif = NotificationModel(
         id: '',
-        userId: 'test_user_001',
+        userId: userId,
         title: 'Item Match Found',
         body: 'We found a match for your lost keys!',
         timestamp: DateTime.now(),
         isRead: false,
       );
       await _firestore.collection('notifications').add(notif.toMap());
-      _setStatus('Notification created for: ${notif.userId}');
+      _setStatus('Notification created for: $userId');
     } catch (e) {
       _setStatus('Error creating notification: $e');
+    }
+  }
+
+  Future<void> _promoteCurrentToAdmin() async {
+    try {
+      final user = FirebaseAuth.instance.currentUser;
+      if (user == null) {
+        _setStatus('No user logged in!');
+        return;
+      }
+      
+      await _firestore.collection('users').doc(user.uid).update({
+        'role': 'admin',
+      });
+      _setStatus('User ${user.email} promoted to ADMIN!');
+    } catch (e) {
+      _setStatus('Error promoting user: $e');
     }
   }
 
@@ -147,6 +168,12 @@ class _TestDbPageState extends State<TestDbPage> {
             ElevatedButton(
               onPressed: _createTestNotification,
               child: const Text('Create Test Notification (notifications)'),
+            ),
+             const SizedBox(height: 8),
+            ElevatedButton(
+              onPressed: _promoteCurrentToAdmin,
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.indigo, foregroundColor: Colors.white),
+              child: const Text('SEED: Promote Me to Admin'),
             ),
           ],
         ),

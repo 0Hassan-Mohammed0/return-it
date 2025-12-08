@@ -2,8 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:returnit/services/database_service.dart';
 import 'package:returnit/models/item_model.dart';
 import 'package:returnit/utils/theme.dart';
-import 'package:returnit/pages/my_activity_page.dart';
-import 'package:returnit/pages/placeholder_page.dart';
+import 'package:returnit/pages/placeholders.dart';
+import 'package:returnit/pages/settings_page.dart';
+
+import 'package:firebase_auth/firebase_auth.dart';
+
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -17,8 +20,8 @@ class _HomePageState extends State<HomePage> {
 
   final List<Widget> _pages = [
     const MyActivityPage(),
-    const _HomeContent(), // Extracted Home Content
-    const PlaceholderPage(title: 'Profile'),
+    const _HomeContent(),
+    const SettingsPage(),
   ];
 
   @override
@@ -46,8 +49,8 @@ class _HomePageState extends State<HomePage> {
             label: 'Home',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.person),
-            label: 'Profile',
+            icon: Icon(Icons.settings),
+            label: 'Settings',
           ),
         ],
       ),
@@ -55,11 +58,28 @@ class _HomePageState extends State<HomePage> {
   }
 }
 
-class _HomeContent extends StatelessWidget {
+class _HomeContent extends StatefulWidget {
   const _HomeContent();
 
   @override
+  State<_HomeContent> createState() => _HomeContentState();
+}
+
+class _HomeContentState extends State<_HomeContent> {
+  final _searchController = TextEditingController();
+  String _searchQuery = '';
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final user = FirebaseAuth.instance.currentUser;
+    final userId = user?.uid ?? '';
+
     return Scaffold(
       appBar: AppBar(
         title: Row(
@@ -72,7 +92,9 @@ class _HomeContent extends StatelessWidget {
         ),
         actions: [
           StreamBuilder<int>(
-            stream: DatabaseService().getUnreadNotificationsCount('test_user_001'), // Using test user for demo
+            stream: userId.isNotEmpty 
+                ? DatabaseService().getUnreadNotificationsCount(userId) 
+                : Stream.value(0),
             builder: (context, snapshot) {
               int count = snapshot.data ?? 0;
               return Stack(
@@ -119,116 +141,195 @@ class _HomeContent extends StatelessWidget {
           ),
         ],
       ),
-      body: SingleChildScrollView(
-        child: Padding(
-          padding: const EdgeInsets.all(16.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Search Bar
-              TextField(
-                decoration: InputDecoration(
-                  hintText: 'Search items, categories, or locations..',
-                  prefixIcon: const Icon(Icons.search),
-                  filled: true,
-                  fillColor: Colors.grey[100],
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide.none,
-                  ),
-                  contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 16),
-                ),
-              ),
-              const SizedBox(height: 24),
-              
-              // 2x2 Grid
-              GridView.count(
-                shrinkWrap: true,
-                physics: const NeverScrollableScrollPhysics(),
-                crossAxisCount: 2,
-                mainAxisSpacing: 16,
-                crossAxisSpacing: 16,
-                childAspectRatio: 1.3, // Made smaller (shorter)
-                children: [
-                  _buildMenuCard(
-                    context, 
-                    'Lost Items', 
-                    'Browse lost items', 
-                    Icons.search_outlined, 
-                    Colors.blue,
-                    '/lost_items'
-                  ),
-                  _buildMenuCard(
-                    context, 
-                    'Found Items', 
-                    'Browse found items', 
-                    Icons.inventory_2_outlined, 
-                    Colors.orange,
-                    '/found_items'
-                  ),
-                   _buildMenuCard(
-                    context, 
-                    'Report Lost', 
-                    'You lost something?', 
-                    Icons.add_circle_outline, 
-                    AppTheme.primaryBlue,
-                    '/report_lost'
-                  ),
-                  _buildMenuCard(
-                    context, 
-                    'Report Found', 
-                    'You found something?', 
-                    Icons.playlist_add_check, 
-                    AppTheme.teal,
-                    '/report_found'
-                  ),
-                ],
-              ),
-              
-              const SizedBox(height: 24),
-              
-              // Recent Items Header
-              const Text(
-                'Recently Added',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.black87,
-                ),
-              ),
-              const SizedBox(height: 12),
-              
-              // Recent Items List (Horizontal) with Firebase
-              SizedBox(
-                height: 260,
-                child: StreamBuilder<List<ItemModel>>(
-                  stream: DatabaseService().getRecentItems(),
-                  builder: (context, snapshot) {
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      return const Center(child: CircularProgressIndicator());
-                    }
-                    if (snapshot.hasError) {
-                      return Center(child: Text('Error: ${snapshot.error}'));
-                    }
-                    if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                      return const Center(child: Text('No recent items found.'));
-                    }
-
-                    final items = snapshot.data!;
-                    return ListView.separated(
-                      scrollDirection: Axis.horizontal,
-                      itemCount: items.length,
-                      separatorBuilder: (context, index) => const SizedBox(width: 16),
-                      itemBuilder: (context, index) {
-                        final item = items[index];
-                        return _buildItemCard(context, item);
+      body: Column(
+        children: [
+          // Search Bar
+          Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: TextField(
+              controller: _searchController,
+              onChanged: (value) {
+                setState(() {
+                  _searchQuery = value.toLowerCase().trim();
+                });
+              },
+              decoration: InputDecoration(
+                hintText: 'Search items, categories, or locations..',
+                prefixIcon: const Icon(Icons.search),
+                suffixIcon: _searchQuery.isNotEmpty 
+                  ? IconButton(
+                      icon: const Icon(Icons.clear),
+                      onPressed: () {
+                        _searchController.clear();
+                        setState(() {
+                          _searchQuery = '';
+                        });
                       },
-                    );
-                  },
+                    )
+                  : null,
+                filled: true,
+                fillColor: Colors.grey[100],
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(12),
+                  borderSide: BorderSide.none,
                 ),
+                contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 16),
               ),
-            ],
+            ),
           ),
+
+          // Content
+          Expanded(
+            child: _searchQuery.isEmpty 
+              ? _buildDefaultContent(context)
+              : _buildSearchResults(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSearchResults() {
+    return StreamBuilder<List<ItemModel>>(
+      stream: DatabaseService().getAllItems(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        if (snapshot.hasError) {
+          return Center(child: Text('Error: ${snapshot.error}'));
+        }
+        
+        final items = snapshot.data ?? [];
+        final filteredItems = items.where((item) {
+          final title = item.title.toLowerCase();
+          final loc = item.location.toLowerCase();
+          final desc = item.description.toLowerCase();
+          final query = _searchQuery.toLowerCase(); // Ensure query uses lower case too
+          return title.contains(query) || loc.contains(query) || desc.contains(query);
+        }).toList();
+
+        if (filteredItems.isEmpty) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.search_off, size: 60, color: Colors.grey[400]),
+                const SizedBox(height: 16),
+                Text('No results found for "$_searchQuery"', style: TextStyle(color: Colors.grey[600])),
+              ],
+            ),
+          );
+        }
+
+        return ListView.separated(
+          padding: const EdgeInsets.all(16),
+          itemCount: filteredItems.length,
+          separatorBuilder: (context, index) => const SizedBox(height: 12),
+          itemBuilder: (context, index) {
+            final item = filteredItems[index]; 
+            return _buildItemCard(context, item, isList: true);
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildDefaultContent(BuildContext context) {
+    return SingleChildScrollView(
+      child: Padding(
+        padding: const EdgeInsets.only(left: 16.0, right: 16.0, bottom: 16.0), 
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // 2x2 Grid
+            GridView.count(
+              shrinkWrap: true,
+              physics: const NeverScrollableScrollPhysics(),
+              crossAxisCount: 2,
+              mainAxisSpacing: 16,
+              crossAxisSpacing: 16,
+              childAspectRatio: 1.3,
+              children: [
+                _buildMenuCard(
+                  context, 
+                  'Lost Items', 
+                  'Browse lost items', 
+                  Icons.search_outlined, 
+                  Colors.blue,
+                  '/lost_items'
+                ),
+                _buildMenuCard(
+                  context, 
+                  'Found Items', 
+                  'Browse found items', 
+                  Icons.inventory_2_outlined, 
+                  Colors.orange,
+                  '/found_items'
+                ),
+                 _buildMenuCard(
+                  context, 
+                  'Report Lost', 
+                  'You lost something?', 
+                  Icons.add_circle_outline, 
+                  AppTheme.primaryBlue,
+                  '/report_lost'
+                ),
+                _buildMenuCard(
+                  context, 
+                  'Report Found', 
+                  'You found something?', 
+                  Icons.playlist_add_check, 
+                  AppTheme.teal,
+                  '/report_found'
+                ),
+              ],
+            ),
+            
+            const SizedBox(height: 24),
+            
+            // Recent Items Header
+            const Text(
+              'Recently Added',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.black87,
+              ),
+            ),
+            const SizedBox(height: 12),
+            
+            // Recent Items List (Horizontal) with Firebase
+            SizedBox(
+              height: 260,
+              child: StreamBuilder<List<ItemModel>>(
+                stream: DatabaseService().getRecentItems(),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(child: CircularProgressIndicator());
+                  }
+                  if (snapshot.hasError) {
+                    return Center(child: Text('Error: ${snapshot.error}'));
+                  }
+                  if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                    return const Center(child: Text('No recent items found.'));
+                  }
+
+                  final items = snapshot.data!;
+                  return ListView.separated(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: items.length,
+                    separatorBuilder: (context, index) => const SizedBox(width: 16),
+                    itemBuilder: (context, index) {
+                      final item = items[index];
+                      return _buildItemCard(context, item);
+                    },
+                  );
+                },
+              ),
+            ),
+            const SizedBox(height: 16),
+          ],
         ),
       ),
     );
@@ -293,7 +394,41 @@ class _HomeContent extends StatelessWidget {
     );
   }
 
-  Widget _buildItemCard(BuildContext context, ItemModel item) {
+  Widget _buildItemCard(BuildContext context, ItemModel item, {bool isList = false}) {
+    if (isList) {
+      return Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: Colors.grey.shade200),
+        ),
+        child: ListTile(
+          leading: Container(
+            width: 50, height: 50,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(8),
+              color: Colors.grey[200],
+              image: item.imageUrl != null && item.imageUrl!.isNotEmpty
+                ? DecorationImage(image: NetworkImage(item.imageUrl!), fit: BoxFit.cover)
+                : null
+            ),
+            child: item.imageUrl == null || item.imageUrl!.isEmpty 
+              ? const Icon(Icons.image, color: Colors.grey) 
+              : null,
+          ),
+          title: Text(item.title, maxLines: 1, overflow: TextOverflow.ellipsis),
+          subtitle: Text('${item.type == 'lost' ? 'Lost' : 'Found'} • ${item.location}'),
+          onTap: () {
+            Navigator.pushNamed(
+              context,
+              '/item_details',
+              arguments: item,
+            );
+          },
+        ),
+      );
+    }
+    
     return MouseRegion(
       cursor: SystemMouseCursors.click,
       child: Material(
@@ -310,15 +445,12 @@ class _HomeContent extends StatelessWidget {
           child: Container(
             width: 180,
             decoration: const BoxDecoration(
-              // REMOVED color: white to let InkWell show on top if needed, 
-              // but usually InkWell needs to be ON Material.
-              // So we keep formatting simple.
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Expanded(
-                  child: Hero( // Added Hero for smooth transition
+                  child: Hero( 
                     tag: item.id,
                     child: Container(
                       width: double.infinity,

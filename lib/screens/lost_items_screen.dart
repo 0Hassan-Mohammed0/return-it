@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:returnit/models/item_model.dart';
-import 'package:returnit/pages/item_details_page.dart';
+
 import 'package:intl/intl.dart';
 
 class LostItemsScreen extends StatefulWidget {
