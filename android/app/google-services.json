@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "555189403404",
+    "project_id": "return-it-d9eae",
+    "storage_bucket": "return-it-d9eae.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:555189403404:android:3d4a4ae4748dd1a63e1329",
+        "android_client_info": {
+          "package_name": "com.example.returnit"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyA4T77pCinmEb0C8DCUM_2KduppEjVOFak"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
