@@ -14,6 +14,7 @@ class AppRoutes {
   static const String reportLost = '/report_lost';
   static const String reportFound = '/report_found';
   static const String itemDetails = '/item_details';
+  static const String requests = '/requests';
   static const String notifications = '/notifications';
   static const String testDb = '/test_db';
 }

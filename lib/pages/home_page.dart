@@ -16,12 +16,12 @@ class HomePage extends StatefulWidget {
 }
 
 class _HomePageState extends State<HomePage> {
-  int _currentIndex = 1; // Start at Home (Middle)
+  int _currentIndex = 0; // Start at Home (First)
 
   final List<Widget> _pages = [
-    const MyActivityPage(),
     const _HomeContent(),
-    const SettingsPage(),
+    const MyActivityPage(),
+    const SettingsPage(), // Using Settings as Profile for now
   ];
 
   @override
@@ -41,16 +41,16 @@ class _HomePageState extends State<HomePage> {
         unselectedItemColor: Colors.grey,
         items: const [
           BottomNavigationBarItem(
-            icon: Icon(Icons.history),
-            label: 'My Activity',
-          ),
-          BottomNavigationBarItem(
             icon: Icon(Icons.home),
             label: 'Home',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.settings),
-            label: 'Settings',
+            icon: Icon(Icons.history),
+            label: 'Activities',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.person),
+            label: 'Profile',
           ),
         ],
       ),
@@ -343,7 +343,7 @@ class _HomeContentState extends State<_HomeContent> {
         border: Border.all(color: Colors.grey.shade200),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.05),
+            color: Colors.black.withOpacity(0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -465,7 +465,7 @@ class _HomeContentState extends State<_HomeContent> {
                             : null,
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.05),
+                            color: Colors.black.withOpacity(0.05),
                             blurRadius: 5,
                             offset: const Offset(0, 2),
                           ),
