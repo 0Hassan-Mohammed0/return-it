@@ -12,7 +12,12 @@ import 'screens/admin/admin_dashboard_screen.dart';
 import 'screens/admin/admin_users_screen.dart';
 import 'screens/admin/admin_items_screen.dart';
 import 'screens/lost_items_screen.dart';
+import 'screens/lost_items_screen.dart';
 import 'screens/found_items_screen.dart';
+import 'screens/report_lost_screen.dart';
+import 'screens/report_found_screen.dart';
+import 'screens/item_details_screen.dart';
+import 'screens/requests_screen.dart';
 import 'pages/placeholders.dart';
 import 'pages/test_db_page.dart';
 import 'pages/splash_page.dart';
@@ -66,7 +71,7 @@ class MainApp extends StatelessWidget {
         ),
         inputDecorationTheme: InputDecorationTheme(
           filled: true,
-          fillColor: const Color(0xFFFDEB9E).withValues(alpha: 0.1), // Subtle yellow tint for inputs
+          fillColor: const Color(0xFFFDEB9E).withOpacity(0.1), // Subtle yellow tint for inputs
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
             borderSide: BorderSide.none,
@@ -104,6 +109,7 @@ class MainApp extends StatelessWidget {
         AppRoutes.reportLost: (context) => const AuthGuard(child: ReportLostPage()),
         AppRoutes.reportFound: (context) => const AuthGuard(child: ReportFoundPage()),
         AppRoutes.itemDetails: (context) => const AuthGuard(child: ItemDetailsPage()),
+        AppRoutes.requests: (context) => const AuthGuard(child: RequestsScreen()),
         AppRoutes.notifications: (context) => const AuthGuard(child: NotificationsPage()),
         AppRoutes.testDb: (context) => const AuthGuard(child: TestDbPage()),
       },

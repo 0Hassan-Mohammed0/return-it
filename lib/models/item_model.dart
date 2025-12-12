@@ -11,6 +11,7 @@ class ItemModel {
   final String category;
   final DateTime timestamp;
   final bool isResolved;
+  final bool handedToSecurity;
 
   ItemModel({
     required this.id,
@@ -23,6 +24,7 @@ class ItemModel {
     required this.category,
     required this.timestamp,
     this.isResolved = false,
+    this.handedToSecurity = false,
   });
 
   Map<String, dynamic> toMap() {
@@ -37,6 +39,7 @@ class ItemModel {
       'category': category,
       'timestamp': Timestamp.fromDate(timestamp),
       'isResolved': isResolved,
+      'handedToSecurity': handedToSecurity,
     };
   }
 
@@ -52,6 +55,7 @@ class ItemModel {
       category: map['category'] ?? 'Other',
       timestamp: (map['timestamp'] as Timestamp).toDate(),
       isResolved: map['isResolved'] ?? false,
+      handedToSecurity: map['handedToSecurity'] ?? false,
     );
   }
 

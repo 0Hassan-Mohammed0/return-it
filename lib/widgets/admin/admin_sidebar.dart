@@ -64,7 +64,7 @@ class AdminSidebar extends StatelessWidget {
           fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
         ),
       ),
-      tileColor: isSelected ? Colors.white.withValues(alpha: 0.1) : null,
+      tileColor: isSelected ? Colors.white.withOpacity(0.1) : null,
       onTap: () {
         if (!isSelected) {
           Navigator.pushReplacementNamed(context, route);

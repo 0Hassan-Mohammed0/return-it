@@ -18,21 +18,7 @@ class PlaceholderPage extends StatelessWidget {
 
 // --- Specific Placeholders ---
 
-class ReportLostPage extends StatelessWidget {
-  const ReportLostPage({super.key});
-  @override
-  Widget build(BuildContext context) {
-    return const PlaceholderPage(title: 'Report Lost Item');
-  }
-}
 
-class ReportFoundPage extends StatelessWidget {
-  const ReportFoundPage({super.key});
-  @override
-  Widget build(BuildContext context) {
-    return const PlaceholderPage(title: 'Report Found Item');
-  }
-}
 
 class NotificationsPage extends StatelessWidget {
   const NotificationsPage({super.key});
@@ -50,10 +36,4 @@ class MyActivityPage extends StatelessWidget {
   }
 }
 
-class ItemDetailsPage extends StatelessWidget {
-  const ItemDetailsPage({super.key});
-  @override
-  Widget build(BuildContext context) {
-    return const PlaceholderPage(title: 'Item Details');
-  }
-}
+
