@@ -2,11 +2,11 @@ import 'package:flutter/material.dart';
 import 'package:returnit/services/database_service.dart';
 import 'package:returnit/models/item_model.dart';
 import 'package:returnit/utils/theme.dart';
-import 'package:returnit/pages/placeholders.dart';
+import 'package:returnit/pages/my_activity_page.dart'; // [NEW]
 import 'package:returnit/pages/settings_page.dart';
+import 'package:returnit/screens/requests_screen.dart';
 
 import 'package:firebase_auth/firebase_auth.dart';
-
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -21,6 +21,7 @@ class _HomePageState extends State<HomePage> {
   final List<Widget> _pages = [
     const _HomeContent(),
     const MyActivityPage(),
+    const RequestsScreen(),
     const SettingsPage(), // Using Settings as Profile for now
   ];
 
@@ -47,6 +48,10 @@ class _HomePageState extends State<HomePage> {
           BottomNavigationBarItem(
             icon: Icon(Icons.history),
             label: 'Activities',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.compare_arrows),
+            label: 'Requests',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.person),
@@ -87,13 +92,14 @@ class _HomeContentState extends State<_HomeContent> {
             // Ensure logo exists in assets
             Image.asset('assets/images/logo.png', width: 40, height: 40),
             const SizedBox(width: 8),
-            const Text('ReturnIt', style: TextStyle(fontWeight: FontWeight.bold)),
+            const Text('ReturnIt',
+                style: TextStyle(fontWeight: FontWeight.bold)),
           ],
         ),
         actions: [
           StreamBuilder<int>(
-            stream: userId.isNotEmpty 
-                ? DatabaseService().getUnreadNotificationsCount(userId) 
+            stream: userId.isNotEmpty
+                ? DatabaseService().getUnreadNotificationsCount(userId)
                 : Stream.value(0),
             builder: (context, snapshot) {
               int count = snapshot.data ?? 0;
@@ -136,7 +142,7 @@ class _HomeContentState extends State<_HomeContent> {
           IconButton(
             icon: const Icon(Icons.perm_data_setting), // Temp Icon
             onPressed: () {
-               Navigator.pushNamed(context, '/test_db');
+              Navigator.pushNamed(context, '/test_db');
             },
           ),
         ],
@@ -156,33 +162,34 @@ class _HomeContentState extends State<_HomeContent> {
               decoration: InputDecoration(
                 hintText: 'Search items, categories, or locations..',
                 prefixIcon: const Icon(Icons.search),
-                suffixIcon: _searchQuery.isNotEmpty 
-                  ? IconButton(
-                      icon: const Icon(Icons.clear),
-                      onPressed: () {
-                        _searchController.clear();
-                        setState(() {
-                          _searchQuery = '';
-                        });
-                      },
-                    )
-                  : null,
+                suffixIcon: _searchQuery.isNotEmpty
+                    ? IconButton(
+                        icon: const Icon(Icons.clear),
+                        onPressed: () {
+                          _searchController.clear();
+                          setState(() {
+                            _searchQuery = '';
+                          });
+                        },
+                      )
+                    : null,
                 filled: true,
                 fillColor: Colors.grey[100],
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(12),
                   borderSide: BorderSide.none,
                 ),
-                contentPadding: const EdgeInsets.symmetric(vertical: 0, horizontal: 16),
+                contentPadding:
+                    const EdgeInsets.symmetric(vertical: 0, horizontal: 16),
               ),
             ),
           ),
 
           // Content
           Expanded(
-            child: _searchQuery.isEmpty 
-              ? _buildDefaultContent(context)
-              : _buildSearchResults(),
+            child: _searchQuery.isEmpty
+                ? _buildDefaultContent(context)
+                : _buildSearchResults(),
           ),
         ],
       ),
@@ -199,14 +206,17 @@ class _HomeContentState extends State<_HomeContent> {
         if (snapshot.hasError) {
           return Center(child: Text('Error: ${snapshot.error}'));
         }
-        
+
         final items = snapshot.data ?? [];
         final filteredItems = items.where((item) {
           final title = item.title.toLowerCase();
           final loc = item.location.toLowerCase();
           final desc = item.description.toLowerCase();
-          final query = _searchQuery.toLowerCase(); // Ensure query uses lower case too
-          return title.contains(query) || loc.contains(query) || desc.contains(query);
+          final query =
+              _searchQuery.toLowerCase(); // Ensure query uses lower case too
+          return title.contains(query) ||
+              loc.contains(query) ||
+              desc.contains(query);
         }).toList();
 
         if (filteredItems.isEmpty) {
@@ -216,7 +226,8 @@ class _HomeContentState extends State<_HomeContent> {
               children: [
                 Icon(Icons.search_off, size: 60, color: Colors.grey[400]),
                 const SizedBox(height: 16),
-                Text('No results found for "$_searchQuery"', style: TextStyle(color: Colors.grey[600])),
+                Text('No results found for "$_searchQuery"',
+                    style: TextStyle(color: Colors.grey[600])),
               ],
             ),
           );
@@ -227,7 +238,7 @@ class _HomeContentState extends State<_HomeContent> {
           itemCount: filteredItems.length,
           separatorBuilder: (context, index) => const SizedBox(height: 12),
           itemBuilder: (context, index) {
-            final item = filteredItems[index]; 
+            final item = filteredItems[index];
             return _buildItemCard(context, item, isList: true);
           },
         );
@@ -238,7 +249,7 @@ class _HomeContentState extends State<_HomeContent> {
   Widget _buildDefaultContent(BuildContext context) {
     return SingleChildScrollView(
       child: Padding(
-        padding: const EdgeInsets.only(left: 16.0, right: 16.0, bottom: 16.0), 
+        padding: const EdgeInsets.only(left: 16.0, right: 16.0, bottom: 16.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -251,43 +262,24 @@ class _HomeContentState extends State<_HomeContent> {
               crossAxisSpacing: 16,
               childAspectRatio: 1.3,
               children: [
+                _buildMenuCard(context, 'Lost Items', 'Browse lost items',
+                    Icons.search_outlined, Colors.blue, '/lost_items'),
+                _buildMenuCard(context, 'Found Items', 'Browse found items',
+                    Icons.inventory_2_outlined, Colors.orange, '/found_items'),
                 _buildMenuCard(
-                  context, 
-                  'Lost Items', 
-                  'Browse lost items', 
-                  Icons.search_outlined, 
-                  Colors.blue,
-                  '/lost_items'
-                ),
-                _buildMenuCard(
-                  context, 
-                  'Found Items', 
-                  'Browse found items', 
-                  Icons.inventory_2_outlined, 
-                  Colors.orange,
-                  '/found_items'
-                ),
-                 _buildMenuCard(
-                  context, 
-                  'Report Lost', 
-                  'You lost something?', 
-                  Icons.add_circle_outline, 
-                  AppTheme.primaryBlue,
-                  '/report_lost'
-                ),
-                _buildMenuCard(
-                  context, 
-                  'Report Found', 
-                  'You found something?', 
-                  Icons.playlist_add_check, 
-                  AppTheme.teal,
-                  '/report_found'
-                ),
+                    context,
+                    'Report Lost',
+                    'You lost something?',
+                    Icons.add_circle_outline,
+                    AppTheme.primaryBlue,
+                    '/report_lost'),
+                _buildMenuCard(context, 'Report Found', 'You found something?',
+                    Icons.playlist_add_check, AppTheme.teal, '/report_found'),
               ],
             ),
-            
+
             const SizedBox(height: 24),
-            
+
             // Recent Items Header
             const Text(
               'Recently Added',
@@ -298,7 +290,7 @@ class _HomeContentState extends State<_HomeContent> {
               ),
             ),
             const SizedBox(height: 12),
-            
+
             // Recent Items List (Horizontal) with Firebase
             SizedBox(
               height: 260,
@@ -319,7 +311,8 @@ class _HomeContentState extends State<_HomeContent> {
                   return ListView.separated(
                     scrollDirection: Axis.horizontal,
                     itemCount: items.length,
-                    separatorBuilder: (context, index) => const SizedBox(width: 16),
+                    separatorBuilder: (context, index) =>
+                        const SizedBox(width: 16),
                     itemBuilder: (context, index) {
                       final item = items[index];
                       return _buildItemCard(context, item);
@@ -335,7 +328,8 @@ class _HomeContentState extends State<_HomeContent> {
     );
   }
 
-  Widget _buildMenuCard(BuildContext context, String title, String subtitle, IconData icon, Color iconColor, String route) {
+  Widget _buildMenuCard(BuildContext context, String title, String subtitle,
+      IconData icon, Color iconColor, String route) {
     return Container(
       decoration: BoxDecoration(
         color: Colors.white,
@@ -343,7 +337,7 @@ class _HomeContentState extends State<_HomeContent> {
         border: Border.all(color: Colors.grey.shade200),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -364,10 +358,10 @@ class _HomeContentState extends State<_HomeContent> {
               children: [
                 Container(
                   padding: const EdgeInsets.all(8),
-                   // decoration: BoxDecoration(
-                   //   color: iconColor.withOpacity(0.1),
-                   //   borderRadius: BorderRadius.circular(8),
-                   // ),
+                  // decoration: BoxDecoration(
+                  //   color: iconColor.withOpacity(0.1),
+                  //   borderRadius: BorderRadius.circular(8),
+                  // ),
                   child: Icon(icon, color: iconColor, size: 28),
                 ),
                 const Spacer(),
@@ -394,7 +388,8 @@ class _HomeContentState extends State<_HomeContent> {
     );
   }
 
-  Widget _buildItemCard(BuildContext context, ItemModel item, {bool isList = false}) {
+  Widget _buildItemCard(BuildContext context, ItemModel item,
+      {bool isList = false}) {
     if (isList) {
       return Container(
         decoration: BoxDecoration(
@@ -404,20 +399,22 @@ class _HomeContentState extends State<_HomeContent> {
         ),
         child: ListTile(
           leading: Container(
-            width: 50, height: 50,
+            width: 50,
+            height: 50,
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(8),
-              color: Colors.grey[200],
-              image: item.imageUrl != null && item.imageUrl!.isNotEmpty
-                ? DecorationImage(image: NetworkImage(item.imageUrl!), fit: BoxFit.cover)
-                : null
-            ),
-            child: item.imageUrl == null || item.imageUrl!.isEmpty 
-              ? const Icon(Icons.image, color: Colors.grey) 
-              : null,
+                borderRadius: BorderRadius.circular(8),
+                color: Colors.grey[200],
+                image: item.imageUrl != null && item.imageUrl!.isNotEmpty
+                    ? DecorationImage(
+                        image: NetworkImage(item.imageUrl!), fit: BoxFit.cover)
+                    : null),
+            child: item.imageUrl == null || item.imageUrl!.isEmpty
+                ? const Icon(Icons.image, color: Colors.grey)
+                : null,
           ),
           title: Text(item.title, maxLines: 1, overflow: TextOverflow.ellipsis),
-          subtitle: Text('${item.type == 'lost' ? 'Lost' : 'Found'} • ${item.location}'),
+          subtitle: Text(
+              '${item.type == 'lost' ? 'Lost' : 'Found'} • ${item.location}'),
           onTap: () {
             Navigator.pushNamed(
               context,
@@ -428,7 +425,7 @@ class _HomeContentState extends State<_HomeContent> {
         ),
       );
     }
-    
+
     return MouseRegion(
       cursor: SystemMouseCursors.click,
       child: Material(
@@ -444,35 +441,36 @@ class _HomeContentState extends State<_HomeContent> {
           borderRadius: BorderRadius.circular(12),
           child: Container(
             width: 180,
-            decoration: const BoxDecoration(
-            ),
+            decoration: const BoxDecoration(),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Expanded(
-                  child: Hero( 
+                  child: Hero(
                     tag: item.id,
                     child: Container(
                       width: double.infinity,
                       decoration: BoxDecoration(
                         color: Colors.grey[200],
                         borderRadius: BorderRadius.circular(12),
-                        image: item.imageUrl != null && item.imageUrl!.isNotEmpty
-                            ? DecorationImage(
-                                image: NetworkImage(item.imageUrl!),
-                                fit: BoxFit.contain,
-                              )
-                            : null,
+                        image:
+                            item.imageUrl != null && item.imageUrl!.isNotEmpty
+                                ? DecorationImage(
+                                    image: NetworkImage(item.imageUrl!),
+                                    fit: BoxFit.contain,
+                                  )
+                                : null,
                         boxShadow: [
                           BoxShadow(
-                            color: Colors.black.withOpacity(0.05),
+                            color: Colors.black.withValues(alpha: 0.05),
                             blurRadius: 5,
                             offset: const Offset(0, 2),
                           ),
                         ],
                       ),
                       child: item.imageUrl == null || item.imageUrl!.isEmpty
-                          ? Icon(Icons.image_not_supported, color: Colors.grey[400], size: 50)
+                          ? Icon(Icons.image_not_supported,
+                              color: Colors.grey[400], size: 50)
                           : null,
                     ),
                   ),
@@ -494,8 +492,8 @@ class _HomeContentState extends State<_HomeContent> {
                     fontSize: 14,
                     color: Colors.grey[600],
                   ),
-                   maxLines: 1,
-                   overflow: TextOverflow.ellipsis,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ],
             ),

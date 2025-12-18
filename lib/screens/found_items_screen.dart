@@ -14,7 +14,7 @@ class FoundItemsScreen extends StatefulWidget {
 class _FoundItemsScreenState extends State<FoundItemsScreen> {
   final TextEditingController _searchController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
-  
+
   // Data
   List<ItemModel> _allItems = [];
   bool _isLoading = false;
@@ -24,7 +24,7 @@ class _FoundItemsScreenState extends State<FoundItemsScreen> {
   String? _selectedLocation;
   String? _selectedStatus;
   String? _selectedDate;
-  
+
   // Frontend search query
   String _searchQuery = '';
   String? _error;
@@ -51,7 +51,7 @@ class _FoundItemsScreenState extends State<FoundItemsScreen> {
 
   Future<void> _fetchItems({bool refresh = false}) async {
     if (_isLoading) return;
-    
+
     setState(() {
       _isLoading = true;
       _error = null;
@@ -59,14 +59,16 @@ class _FoundItemsScreenState extends State<FoundItemsScreen> {
 
     try {
       // Client-Side Filtering approach: Fetch all, then filter in app.
-      Query query = FirebaseFirestore.instance.collection('items')
+      Query query = FirebaseFirestore.instance
+          .collection('items')
           .where('type', isEqualTo: 'found') // Lowercase found
           .orderBy('timestamp', descending: true);
 
       final QuerySnapshot snapshot = await query.get();
-      
-      final newItems = snapshot.docs.map((doc) => ItemModel.fromFirestore(doc)).toList();
-      
+
+      final newItems =
+          snapshot.docs.map((doc) => ItemModel.fromFirestore(doc)).toList();
+
       if (mounted) {
         setState(() {
           _allItems = newItems;
@@ -96,15 +98,16 @@ class _FoundItemsScreenState extends State<FoundItemsScreen> {
   List<ItemModel> _getFilteredItems() {
     return _allItems.where((item) {
       // Search Query
-      if (_searchQuery.isNotEmpty && !item.title.toLowerCase().contains(_searchQuery)) {
+      if (_searchQuery.isNotEmpty &&
+          !item.title.toLowerCase().contains(_searchQuery)) {
         return false;
       }
-      
+
       // Category
       if (_selectedCategory != null && item.category != _selectedCategory) {
         return false;
       }
-      
+
       // Location
       if (_selectedLocation != null && item.location != _selectedLocation) {
         return false;
@@ -112,31 +115,37 @@ class _FoundItemsScreenState extends State<FoundItemsScreen> {
 
       // Status
       if (_selectedStatus != null) {
-        if (_selectedStatus == 'Claimed' && item.status != 'Claimed') return false;
-        if (_selectedStatus == 'Unclaimed' && item.status != 'Unclaimed') return false;
+        if (_selectedStatus == 'Claimed' && item.status != 'Claimed')
+          return false;
+        if (_selectedStatus == 'Unclaimed' && item.status != 'Unclaimed')
+          return false;
       }
 
       // Date
       if (_selectedDate != null) {
         final now = DateTime.now();
         final todayStart = DateTime(now.year, now.month, now.day);
-        
+
         switch (_selectedDate) {
           case 'Today':
             if (item.timestamp.isBefore(todayStart)) return false;
             break;
           case 'Yesterday':
-             final yesterdayStart = todayStart.subtract(const Duration(days: 1));
-             if (item.timestamp.isBefore(yesterdayStart) || item.timestamp.isAfter(todayStart)) return false;
+            final yesterdayStart = todayStart.subtract(const Duration(days: 1));
+            if (item.timestamp.isBefore(yesterdayStart) ||
+                item.timestamp.isAfter(todayStart)) return false;
             break;
           case 'Last 7 days':
-            if (item.timestamp.isBefore(now.subtract(const Duration(days: 7)))) return false;
+            if (item.timestamp.isBefore(now.subtract(const Duration(days: 7))))
+              return false;
             break;
           case 'Last 30 days':
-             if (item.timestamp.isBefore(now.subtract(const Duration(days: 30)))) return false;
+            if (item.timestamp.isBefore(now.subtract(const Duration(days: 30))))
+              return false;
             break;
           case 'Older than 30 days':
-             if (item.timestamp.isAfter(now.subtract(const Duration(days: 30)))) return false;
+            if (item.timestamp.isAfter(now.subtract(const Duration(days: 30))))
+              return false;
             break;
         }
       }
@@ -160,41 +169,43 @@ class _FoundItemsScreenState extends State<FoundItemsScreen> {
             _buildFilters(),
             Expanded(
               child: _error != null
-                ? Center(
-                    child: Padding(
-                      padding: const EdgeInsets.all(16.0),
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          const Icon(Icons.error_outline, size: 48, color: Colors.red),
-                          const SizedBox(height: 16),
-                          Text(
-                            'Error loading items:\n$_error',
-                            textAlign: TextAlign.center,
-                            style: const TextStyle(color: Colors.red),
-                          ),
-                          const SizedBox(height: 16),
-                          ElevatedButton(
-                            onPressed: () => _fetchItems(refresh: true),
-                            child: const Text('Retry'),
-                          ),
-                        ],
+                  ? Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(Icons.error_outline,
+                                size: 48, color: Colors.red),
+                            const SizedBox(height: 16),
+                            Text(
+                              'Error loading items:\n$_error',
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(color: Colors.red),
+                            ),
+                            const SizedBox(height: 16),
+                            ElevatedButton(
+                              onPressed: () => _fetchItems(refresh: true),
+                              child: const Text('Retry'),
+                            ),
+                          ],
+                        ),
                       ),
+                    )
+                  : RefreshIndicator(
+                      onRefresh: () async => _fetchItems(refresh: true),
+                      child: displayItems.isEmpty && !_isLoading
+                          ? const Center(child: Text('No items found'))
+                          : ListView.builder(
+                              controller: _scrollController,
+                              padding: const EdgeInsets.symmetric(
+                                  horizontal: 16, vertical: 8),
+                              itemCount: displayItems.length,
+                              itemBuilder: (context, index) {
+                                return FoundItemCard(item: displayItems[index]);
+                              },
+                            ),
                     ),
-                  )
-                : RefreshIndicator(
-                onRefresh: () async => _fetchItems(refresh: true),
-                child: displayItems.isEmpty && !_isLoading
-                    ? const Center(child: Text('No items found'))
-                    : ListView.builder(
-                        controller: _scrollController,
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                        itemCount: displayItems.length,
-                        itemBuilder: (context, index) {
-                          return FoundItemCard(item: displayItems[index]);
-                        },
-                      ),
-              ),
             ),
           ],
         ),
@@ -235,27 +246,19 @@ class _FoundItemsScreenState extends State<FoundItemsScreen> {
   Widget _buildSearchBar() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0),
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white,
-          borderRadius: BorderRadius.circular(12),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.05),
-              blurRadius: 10,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: TextField(
-          controller: _searchController,
-          decoration: InputDecoration(
-            hintText: 'Search for items...',
-            hintStyle: TextStyle(color: Colors.grey[500], fontSize: 14),
-            prefixIcon: Icon(Icons.search, color: Colors.grey[500], size: 22),
-            border: InputBorder.none,
-            contentPadding: const EdgeInsets.symmetric(vertical: 14),
+      child: TextField(
+        controller: _searchController,
+        decoration: InputDecoration(
+          hintText: 'Search for items...',
+          hintStyle: TextStyle(color: Colors.grey[500], fontSize: 14),
+          prefixIcon: Icon(Icons.search, color: Colors.grey[500], size: 22),
+          filled: true,
+          fillColor: Colors.grey[100],
+          border: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(12),
+            borderSide: BorderSide.none,
           ),
+          contentPadding: const EdgeInsets.symmetric(vertical: 14),
         ),
       ),
     );
@@ -269,15 +272,32 @@ class _FoundItemsScreenState extends State<FoundItemsScreen> {
         scrollDirection: Axis.horizontal,
         children: [
           _FilterChip(
-            label: _selectedCategory ?? 'Category', 
+            label: _selectedCategory ?? 'Category',
             isSelected: _selectedCategory != null,
-            onTap: () => _showFilterOptions('Category', ['Personal items', 'Study materials', 'Electronics', 'IDs/Cards', 'Documents', 'Others']),
+            onTap: () => _showFilterOptions('Category', [
+              'Personal items',
+              'Study materials',
+              'Electronics',
+              'IDs/Cards',
+              'Documents',
+              'Others'
+            ]),
           ),
           const SizedBox(width: 10),
           _FilterChip(
-            label: _selectedLocation ?? 'Location', 
+            label: _selectedLocation ?? 'Location',
             isSelected: _selectedLocation != null,
-            onTap: () => _showFilterOptions('Location', ['مبنى مدني', 'مبنى عمارة', 'مبنى الورش', 'مبنى4', 'مبنى5', 'الكانتين', 'شئون الطلاب', 'البرجولات', 'أخرى']),
+            onTap: () => _showFilterOptions('Location', [
+              'مبنى مدني',
+              'مبنى عمارة',
+              'مبنى الورش',
+              'مبنى4',
+              'مبنى5',
+              'الكانتين',
+              'شئون الطلاب',
+              'البرجولات',
+              'أخرى'
+            ]),
           ),
           const SizedBox(width: 10),
           _FilterChip(
@@ -292,8 +312,8 @@ class _FoundItemsScreenState extends State<FoundItemsScreen> {
             ]),
           ),
           const SizedBox(width: 10),
-           _FilterChip(
-            label: _selectedStatus ?? 'Status', 
+          _FilterChip(
+            label: _selectedStatus ?? 'Status',
             isSelected: _selectedStatus != null,
             onTap: () => _showFilterOptions('Status', ['Claimed', 'Unclaimed']),
           ),
@@ -323,7 +343,8 @@ class _FoundItemsScreenState extends State<FoundItemsScreen> {
                 child: Center(
                   child: Text(
                     'Select $type',
-                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                    style: const TextStyle(
+                        fontWeight: FontWeight.bold, fontSize: 18),
                   ),
                 ),
               ),
@@ -335,12 +356,12 @@ class _FoundItemsScreenState extends State<FoundItemsScreen> {
                 },
               ),
               ...options.map((option) => ListTile(
-                title: Text(option),
-                onTap: () {
-                  _updateFilter(type, option);
-                  Navigator.pop(context);
-                },
-              )),
+                    title: Text(option),
+                    onTap: () {
+                      _updateFilter(type, option);
+                      Navigator.pop(context);
+                    },
+                  )),
             ],
           ),
         );
@@ -354,7 +375,8 @@ class _FilterChip extends StatelessWidget {
   final bool isSelected;
   final VoidCallback onTap;
 
-  const _FilterChip({required this.label, required this.isSelected, required this.onTap});
+  const _FilterChip(
+      {required this.label, required this.isSelected, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -363,9 +385,12 @@ class _FilterChip extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
-          color: isSelected ? const Color(0xFF2196F3).withOpacity(0.1) : Colors.white,
+          color: isSelected
+              ? const Color(0xFF2196F3).withValues(alpha: 0.1)
+              : Colors.white,
           borderRadius: BorderRadius.circular(20),
-          border: Border.all(color: isSelected ? const Color(0xFF2196F3) : Colors.grey[200]!),
+          border: Border.all(
+              color: isSelected ? const Color(0xFF2196F3) : Colors.grey[200]!),
         ),
         child: Row(
           children: [
@@ -378,11 +403,9 @@ class _FilterChip extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 4),
-            Icon(
-              Icons.keyboard_arrow_down, 
-              size: 16, 
-              color: isSelected ? const Color(0xFF2196F3) : Colors.grey[600]
-            ),
+            Icon(Icons.keyboard_arrow_down,
+                size: 16,
+                color: isSelected ? const Color(0xFF2196F3) : Colors.grey[600]),
           ],
         ),
       ),
@@ -406,7 +429,7 @@ class FoundItemCard extends StatelessWidget {
         borderRadius: BorderRadius.circular(16),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -418,18 +441,19 @@ class FoundItemCard extends StatelessWidget {
         child: InkWell(
           borderRadius: BorderRadius.circular(16),
           onTap: () {
-             Navigator.pushNamed(
-               context,
-               '/item_details',
-               arguments: item,
-             );
+            Navigator.pushNamed(
+              context,
+              '/item_details',
+              arguments: item,
+            );
           },
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Image Section
               ClipRRect(
-                borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
+                borderRadius:
+                    const BorderRadius.vertical(top: Radius.circular(16)),
                 child: Stack(
                   children: [
                     SizedBox(
@@ -438,27 +462,29 @@ class FoundItemCard extends StatelessWidget {
                       child: item.imageUrl != null && item.imageUrl!.isNotEmpty
                           ? Image.network(
                               item.imageUrl!,
-                              fit: BoxFit.contain,
+                              fit: BoxFit.cover,
                               errorBuilder: (context, error, stackTrace) {
                                 return Container(
                                   color: Colors.grey[200],
                                   child: const Center(
-                                    child: Icon(Icons.image_not_supported, size: 50, color: Colors.grey),
+                                    child: Icon(Icons.image_not_supported,
+                                        size: 50, color: Colors.grey),
                                   ),
                                 );
                               },
                             )
                           : Container(
-                             color: Colors.grey[200],
-                             child: const Center(
-                               child: Icon(Icons.image_not_supported, size: 50, color: Colors.grey),
-                             ),
-                           ),
+                              color: Colors.grey[200],
+                              child: const Center(
+                                child: Icon(Icons.image_not_supported,
+                                    size: 50, color: Colors.grey),
+                              ),
+                            ),
                     ),
                   ],
                 ),
               ),
-              
+
               Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: Column(
@@ -482,9 +508,12 @@ class FoundItemCard extends StatelessWidget {
                         ),
                         const SizedBox(width: 8),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          padding: const EdgeInsets.symmetric(
+                              horizontal: 8, vertical: 4),
                           decoration: BoxDecoration(
-                            color: claimed ? const Color(0xFFE8F5E9) : const Color(0xFFFFEBEE),
+                            color: claimed
+                                ? const Color(0xFFE8F5E9)
+                                : const Color(0xFFFFEBEE),
                             borderRadius: BorderRadius.circular(12),
                           ),
                           child: Row(
@@ -492,7 +521,9 @@ class FoundItemCard extends StatelessWidget {
                               Icon(
                                 Icons.circle,
                                 size: 8,
-                                color: claimed ? const Color(0xFF4CAF50) : const Color(0xFFF44336), 
+                                color: claimed
+                                    ? const Color(0xFF4CAF50)
+                                    : const Color(0xFFF44336),
                               ),
                               const SizedBox(width: 4),
                               Text(
@@ -500,7 +531,9 @@ class FoundItemCard extends StatelessWidget {
                                 style: TextStyle(
                                   fontSize: 12,
                                   fontWeight: FontWeight.bold,
-                                  color: claimed ? const Color(0xFF4CAF50) : const Color(0xFFF44336),
+                                  color: claimed
+                                      ? const Color(0xFF4CAF50)
+                                      : const Color(0xFFF44336),
                                 ),
                               ),
                             ],
@@ -509,10 +542,11 @@ class FoundItemCard extends StatelessWidget {
                       ],
                     ),
                     const SizedBox(height: 8),
-  
+
                     // Category Tag
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 10, vertical: 4),
                       decoration: BoxDecoration(
                         color: const Color(0xFFE3F2FD),
                         borderRadius: BorderRadius.circular(12),
@@ -527,7 +561,7 @@ class FoundItemCard extends StatelessWidget {
                       ),
                     ),
                     const SizedBox(height: 12),
-  
+
                     // Location and Date Row
                     Row(
                       children: [
@@ -536,7 +570,8 @@ class FoundItemCard extends StatelessWidget {
                             children: [
                               Row(
                                 children: [
-                                  Icon(Icons.location_on, size: 16, color: Colors.grey[600]),
+                                  Icon(Icons.location_on,
+                                      size: 16, color: Colors.grey[600]),
                                   const SizedBox(width: 6),
                                   Expanded(
                                     child: Text(
@@ -553,10 +588,12 @@ class FoundItemCard extends StatelessWidget {
                               const SizedBox(height: 6),
                               Row(
                                 children: [
-                                  Icon(Icons.calendar_today, size: 16, color: Colors.grey[600]),
+                                  Icon(Icons.calendar_today,
+                                      size: 16, color: Colors.grey[600]),
                                   const SizedBox(width: 6),
                                   Text(
-                                    DateFormat('MMMM d, y').format(item.timestamp),
+                                    DateFormat('MMMM d, y')
+                                        .format(item.timestamp),
                                     style: TextStyle(
                                       fontSize: 14,
                                       color: Colors.grey[600],
@@ -567,7 +604,7 @@ class FoundItemCard extends StatelessWidget {
                             ],
                           ),
                         ),
-                        
+
                         // Details Button (Visual only)
                         Container(
                           padding: const EdgeInsets.all(8.0),

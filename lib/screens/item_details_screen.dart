@@ -36,7 +36,22 @@ class _ItemDetailsPageState extends State<ItemDetailsPage> {
         timestamp: DateTime.now(),
       );
 
-      await FirebaseFirestore.instance.collection('requests').add(request.toMap());
+      await FirebaseFirestore.instance
+          .collection('requests')
+          .add(request.toMap());
+
+      // Create Notification for the Owner
+      final notificationRef =
+          FirebaseFirestore.instance.collection('notifications').doc();
+      await notificationRef.set({
+        'id': notificationRef.id,
+        'userId': item.userId, // Notify the Item Owner
+        'title': 'New Request',
+        'body': 'Someone requested your item: "${item.title}"',
+        'timestamp': FieldValue.serverTimestamp(),
+        'isRead': false,
+        'relatedItemId': item.id,
+      });
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -82,7 +97,10 @@ class _ItemDetailsPageState extends State<ItemDetailsPage> {
     setState(() => _isLoading = true);
 
     try {
-      await FirebaseFirestore.instance.collection('items').doc(item.id).delete();
+      await FirebaseFirestore.instance
+          .collection('items')
+          .doc(item.id)
+          .delete();
       if (mounted) {
         Navigator.pop(context); // Go back to items list
         ScaffoldMessenger.of(context).showSnackBar(
@@ -105,8 +123,10 @@ class _ItemDetailsPageState extends State<ItemDetailsPage> {
 
   Future<UserModel?> _fetchOwner(String userId) async {
     try {
-      final doc =
-          await FirebaseFirestore.instance.collection('users').doc(userId).get();
+      final doc = await FirebaseFirestore.instance
+          .collection('users')
+          .doc(userId)
+          .get();
       if (doc.exists) {
         return UserModel.fromMap(doc.data() as Map<String, dynamic>);
       }
@@ -144,7 +164,8 @@ class _ItemDetailsPageState extends State<ItemDetailsPage> {
                     item.imageUrl!,
                     fit: BoxFit.cover,
                     errorBuilder: (_, __, ___) => Container(
-                      color: const Color(0xFFD89B56), // Fallback color from design
+                      color:
+                          const Color(0xFFD89B56), // Fallback color from design
                       child: const Center(
                           child: Icon(Icons.broken_image,
                               size: 64, color: Colors.white54)),
@@ -153,8 +174,8 @@ class _ItemDetailsPageState extends State<ItemDetailsPage> {
                 : Container(
                     color: const Color(0xFFD89B56), // Mockup backdrop color
                     child: const Center(
-                        child: Icon(Icons.image,
-                            size: 64, color: Colors.white54)),
+                        child:
+                            Icon(Icons.image, size: 64, color: Colors.white54)),
                   ),
           ),
 
@@ -163,12 +184,11 @@ class _ItemDetailsPageState extends State<ItemDetailsPage> {
             top: MediaQuery.of(context).padding.top + 10,
             left: 16,
             child: GestureDetector(
-              onTap: () => Navigator.pop(context),
-              child: CircleAvatar(
-                backgroundColor: Colors.black26, 
-                child: const Icon(Icons.arrow_back, color: Colors.white),
-              )
-            ),
+                onTap: () => Navigator.pop(context),
+                child: CircleAvatar(
+                  backgroundColor: Colors.black26,
+                  child: const Icon(Icons.arrow_back, color: Colors.white),
+                )),
           ),
 
           // Content Sheet
@@ -273,7 +293,7 @@ class _ItemDetailsPageState extends State<ItemDetailsPage> {
                       value: item.location,
                     ),
                     const SizedBox(height: 24),
-                    
+
                     Divider(color: Colors.grey[300]),
                     const SizedBox(height: 16),
 
@@ -290,9 +310,10 @@ class _ItemDetailsPageState extends State<ItemDetailsPage> {
                             CircleAvatar(
                               radius: 24,
                               backgroundColor: Colors.grey[300],
-                              backgroundImage: userImage != null && userImage.isNotEmpty
-                                  ? NetworkImage(userImage)
-                                  : null,
+                              backgroundImage:
+                                  userImage != null && userImage.isNotEmpty
+                                      ? NetworkImage(userImage)
+                                      : null,
                               child: (userImage == null || userImage.isEmpty)
                                   ? const Icon(Icons.person, color: Colors.grey)
                                   : null,
@@ -329,7 +350,7 @@ class _ItemDetailsPageState extends State<ItemDetailsPage> {
                       _buildOwnerActions(context, item)
                     else
                       _buildViewerActions(context, item),
-                    
+
                     // Extra spacing for bottom
                     const SizedBox(height: 20),
                   ],
@@ -422,9 +443,20 @@ class _ItemDetailsPageState extends State<ItemDetailsPage> {
                 height: 56,
                 child: ElevatedButton(
                   onPressed: () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Edit feature coming soon!')),
-                    );
+                    // Navigate to the appropriate edit screen based on item type
+                    if (item.type == 'lost') {
+                      Navigator.pushNamed(
+                        context,
+                        '/report_lost',
+                        arguments: item,
+                      );
+                    } else {
+                      Navigator.pushNamed(
+                        context,
+                        '/report_found',
+                        arguments: item,
+                      );
+                    }
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFFE8EAF6),

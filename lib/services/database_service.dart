@@ -1,9 +1,11 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 import 'package:returnit/models/item_model.dart';
 import 'package:returnit/models/user_model.dart';
 import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:image_picker/image_picker.dart'; // Add this for XFile
 
 class DatabaseService {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -11,8 +13,9 @@ class DatabaseService {
   // Collection References
   CollectionReference get _usersRef => _firestore.collection('users');
   CollectionReference get _itemsRef => _firestore.collection('items');
-  CollectionReference get _notificationsRef => _firestore.collection('notifications');
-  
+  CollectionReference get _notificationsRef =>
+      _firestore.collection('notifications');
+
   // ImgBB API Key
   final String _imgbbApiKey = '8bf35dc69e3ae8fe7d1f576f19bcfb45';
 
@@ -52,9 +55,28 @@ class DatabaseService {
     });
   }
 
+  // Get User Items (My Lost / My Found)
+  Stream<List<ItemModel>> getUserItems(String userId, String type) {
+    return _itemsRef
+        .where('userId', isEqualTo: userId)
+        .where('type', isEqualTo: type)
+        .orderBy('timestamp', descending: true)
+        .snapshots()
+        .map((snapshot) {
+      return snapshot.docs.map((doc) {
+        return ItemModel.fromMap(doc.data() as Map<String, dynamic>, doc.id);
+      }).toList();
+    });
+  }
+
   // Add a new Item
   Future<void> addItem(ItemModel item) async {
     await _itemsRef.add(item.toMap());
+  }
+
+  // Update an existing Item
+  Future<void> updateItem(ItemModel item) async {
+    await _itemsRef.doc(item.id).update(item.toMap());
   }
 
   // Get Item by ID
@@ -67,26 +89,59 @@ class DatabaseService {
   }
 
   // Upload Image using ImgBB
-  Future<String?> uploadImage(File imageFile, String folder) async {
+  // Upload Image using ImgBB (Web Compatible)
+  Future<String?> uploadImage(dynamic imageFile, String folder) async {
     try {
       final uri = Uri.parse('https://api.imgbb.com/1/upload');
       final request = http.MultipartRequest('POST', uri)
-        ..fields['key'] = _imgbbApiKey
-        ..files.add(await http.MultipartFile.fromPath('image', imageFile.path));
+        ..fields['key'] = _imgbbApiKey;
+
+      if (kIsWeb) {
+        // Web: Read bytes from XFile or Raw Bytes
+        Uint8List bytes;
+        if (imageFile is Uint8List) {
+          bytes = imageFile;
+        } else if (imageFile is XFile) {
+          // Check for XFile (cross_file/image_picker)
+          bytes = await imageFile.readAsBytes();
+        } else {
+          // Fallback for File (dart:io) on Web - likely fails if not careful, but let's assume XFile for web
+          throw Exception(
+              "Unsupported file type for Web: ${imageFile.runtimeType}");
+        }
+
+        request.files.add(http.MultipartFile.fromBytes(
+          'image',
+          bytes,
+          filename: 'upload.png', // details matter less for ImgBB usually
+        ));
+      } else {
+        // Mobile: Can use File path
+        if (imageFile is File) {
+          request.files
+              .add(await http.MultipartFile.fromPath('image', imageFile.path));
+        } else if (imageFile is XFile) {
+          request.files
+              .add(await http.MultipartFile.fromPath('image', imageFile.path));
+        } else {
+          throw Exception("Unsupported file type: ${imageFile.runtimeType}");
+        }
+      }
 
       final response = await request.send();
       final responseBody = await response.stream.bytesToString();
-      
+
       if (response.statusCode == 200) {
         final jsonResponse = json.decode(responseBody);
         return jsonResponse['data']['url'];
       } else {
-        print('ImgBB Upload Error: ${response.statusCode} - $responseBody');
+        debugPrint(
+            'ImgBB Upload Error: ${response.statusCode} - $responseBody');
         throw Exception('ImgBB Failed: ${response.statusCode}');
       }
     } catch (e) {
-      print('Error uploading image to ImgBB: $e');
-      throw Exception('Upload Failed: $e'); 
+      debugPrint('Error uploading image to ImgBB: $e');
+      throw Exception('Upload Failed: $e');
     }
   }
 
@@ -103,13 +158,14 @@ class DatabaseService {
       QuerySnapshot query = await _itemsRef
           .where('type', isEqualTo: type)
           .where('title', isEqualTo: title)
-          .where('timestamp', isGreaterThanOrEqualTo: Timestamp.fromDate(startOfDay))
+          .where('timestamp',
+              isGreaterThanOrEqualTo: Timestamp.fromDate(startOfDay))
           .where('timestamp', isLessThan: Timestamp.fromDate(endOfDay))
           .get();
 
       return query.docs.isNotEmpty;
     } catch (e) {
-      print('Error checking duplicates: $e');
+      debugPrint('Error checking duplicates: $e');
       return false;
     }
   }
@@ -117,11 +173,11 @@ class DatabaseService {
   // Find Similar Items (Client-Side Filtering to avoid Index errors)
   Future<List<ItemModel>> findSimilarItems({
     required String title,
-    required String typeToSearch, 
+    required String typeToSearch,
     String? location,
   }) async {
     if (title.isEmpty && location == null) return [];
-    
+
     try {
       Query query = _itemsRef;
 
@@ -131,9 +187,9 @@ class DatabaseService {
         query = query
             .where('type', isEqualTo: typeToSearch)
             .where('location', isEqualTo: location);
-            
+
         // Limit results
-        query = query.limit(50); 
+        query = query.limit(50);
 
         QuerySnapshot snapshot = await query.get();
         List<ItemModel> results = snapshot.docs.map((doc) {
@@ -147,19 +203,19 @@ class DatabaseService {
             return item.title.toLowerCase().contains(searchLower);
           }).toList();
         }
-        
+
         return results;
-      } 
-      
+      }
+
       // PRIORITY 2: Global Search (If no location selected)
       // To support Case-Insensitive AND Substring search (e.g. "Bag" finds "black bag")
       // without Algolia/ElasticSearch, we will fetch a batch of recent items and filter client-side.
       else if (title.isNotEmpty) {
         // Fetch last 100 items of this type (most likely to contain relevant active items)
         query = _itemsRef
-             .where('type', isEqualTo: typeToSearch)
-             .orderBy('timestamp', descending: true)
-             .limit(100);
+            .where('type', isEqualTo: typeToSearch)
+            .orderBy('timestamp', descending: true)
+            .limit(100);
 
         QuerySnapshot snapshot = await query.get();
 
@@ -168,20 +224,20 @@ class DatabaseService {
         }).toList();
 
         final searchLower = title.toLowerCase();
-        
+
         // Robust Client-Side Filtering
         return results.where((item) {
-           final itemTitle = item.title.toLowerCase();
-           final itemDesc = item.description.toLowerCase();
-           // Check Title OR Description
-           return itemTitle.contains(searchLower) || itemDesc.contains(searchLower);
+          final itemTitle = item.title.toLowerCase();
+          final itemDesc = item.description.toLowerCase();
+          // Check Title OR Description
+          return itemTitle.contains(searchLower) ||
+              itemDesc.contains(searchLower);
         }).toList();
       }
-      
+
       return [];
-      
     } catch (e) {
-      print('Error finding similar items: $e');
+      debugPrint('Error finding similar items: $e');
       return [];
     }
   }
@@ -197,9 +253,10 @@ class DatabaseService {
 
     QuerySnapshot query = await _itemsRef
         .where('type', isEqualTo: typeToSearch)
-        .where('timestamp', isGreaterThanOrEqualTo: Timestamp.fromDate(startOfDay))
+        .where('timestamp',
+            isGreaterThanOrEqualTo: Timestamp.fromDate(startOfDay))
         .where('timestamp', isLessThan: Timestamp.fromDate(endOfDay))
-        .limit(10) 
+        .limit(10)
         .get();
 
     return query.docs.map((doc) {
@@ -216,7 +273,7 @@ class DatabaseService {
     }
     return null;
   }
-  
+
   Future<void> updateUser(UserModel user) async {
     await _usersRef.doc(user.id).set(user.toMap(), SetOptions(merge: true));
   }

@@ -30,7 +30,7 @@ class _AdminItemsScreenState extends State<AdminItemsScreen> {
               borderRadius: BorderRadius.circular(12),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
+                  color: Colors.black.withValues(alpha: 0.05),
                   blurRadius: 10,
                   offset: const Offset(0, 4),
                 ),
@@ -46,7 +46,8 @@ class _AdminItemsScreenState extends State<AdminItemsScreen> {
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+                      contentPadding:
+                          const EdgeInsets.symmetric(horizontal: 16),
                     ),
                   ),
                 ),
@@ -62,7 +63,8 @@ class _AdminItemsScreenState extends State<AdminItemsScreen> {
                       value: 'All Categories',
                       items: const [
                         DropdownMenuItem(
-                            value: 'All Categories', child: Text('All Categories')),
+                            value: 'All Categories',
+                            child: Text('All Categories')),
                         DropdownMenuItem(
                             value: 'Electronics', child: Text('Electronics')),
                         DropdownMenuItem(
@@ -84,7 +86,7 @@ class _AdminItemsScreenState extends State<AdminItemsScreen> {
                 borderRadius: BorderRadius.circular(12),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
+                    color: Colors.black.withValues(alpha: 0.05),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   ),
@@ -135,7 +137,8 @@ class _AdminItemsScreenState extends State<AdminItemsScreen> {
                                 Text('Lost Item ${index + 1}'),
                               ],
                             )),
-                            DataCell(Text(index % 2 == 0 ? 'Electronics' : 'Keys')),
+                            DataCell(
+                                Text(index % 2 == 0 ? 'Electronics' : 'Keys')),
                             DataCell(Text('2023-12-0${index + 1}')),
                             DataCell(
                               Container(
@@ -144,9 +147,10 @@ class _AdminItemsScreenState extends State<AdminItemsScreen> {
                                   vertical: 4,
                                 ),
                                 decoration: BoxDecoration(
-                                  color: statusColor.withOpacity(0.1),
+                                  color: statusColor.withValues(alpha: 0.1),
                                   borderRadius: BorderRadius.circular(12),
-                                  border: Border.all(color: statusColor, width: 1),
+                                  border:
+                                      Border.all(color: statusColor, width: 1),
                                 ),
                                 child: Text(
                                   status,

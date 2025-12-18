@@ -18,7 +18,6 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _phoneController = TextEditingController();
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
-  
 
   final _authService = AuthService(); // Needed for checking if email exists
 
@@ -39,7 +38,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
       // 1. Check if email or phone already exists
       String? conflictError = await _authService.checkEmailOrPhoneExists(
-        _emailController.text.trim().toLowerCase(),
+        _emailController.text.trim(),
         _phoneController.text.trim(),
       );
 
@@ -50,7 +49,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
           if (conflictError.contains('Email')) {
             _emailError = conflictError;
           } else {
-             ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(conflictError)));
+            ScaffoldMessenger.of(context)
+                .showSnackBar(SnackBar(content: Text(conflictError)));
           }
         });
         return;
@@ -62,10 +62,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
 
       if (mounted) {
         Navigator.pushNamed(
-          context, 
+          context,
           AppRoutes.verifyOtp,
           arguments: {
-            'email': _emailController.text.trim().toLowerCase(),
+            'email': _emailController.text.trim(),
             'name': _nameController.text.trim(),
             'phone': _phoneController.text.trim(),
             'password': _passwordController.text,
@@ -91,7 +91,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
   Widget build(BuildContext context) {
     // Regex Patterns
     // Password: At least 8 chars, 1 digit, 1 lowercase, 1 uppercase
-    final passwordRegex = RegExp(r'^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[a-zA-Z]).{8,}$');
+    final passwordRegex =
+        RegExp(r'^(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[a-zA-Z]).{8,}$');
     // Phone: Egypt format starting with +201, 01, or 00201
     final phoneRegex = RegExp(r'^(\+201|01|00201)[0-2,5]{1}[0-9]{8}$');
 
@@ -100,30 +101,32 @@ class _RegisterScreenState extends State<RegisterScreen> {
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
-            padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+            padding:
+                const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
             child: Form(
               key: _formKey,
-              autovalidateMode: AutovalidateMode.onUserInteraction, // Show errors as user types/interacts
+              autovalidateMode: AutovalidateMode
+                  .onUserInteraction, // Show errors as user types/interacts
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                   // Blue Search Icon
+                  // Blue Search Icon
                   Container(
                     width: 60,
                     height: 60,
                     decoration: BoxDecoration(
-
                       color: Theme.of(context).primaryColor,
                       borderRadius: BorderRadius.circular(16),
                       boxShadow: [
                         BoxShadow(
-                          color: Colors.blueAccent.withOpacity(0.3),
+                          color: Colors.blueAccent.withValues(alpha: 0.3),
                           blurRadius: 10,
                           offset: const Offset(0, 4),
                         ),
                       ],
                     ),
-                    child: const Icon(Icons.search, color: Colors.white, size: 30),
+                    child:
+                        const Icon(Icons.search, color: Colors.white, size: 30),
                   ),
                   const SizedBox(height: 24),
                   const Text(
@@ -144,7 +147,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     showLabelAbove: false,
                     prefixIcon: Icons.person,
                     validator: (value) {
-                      if (value == null || value.isEmpty) return 'Please enter your name';
+                      if (value == null || value.isEmpty)
+                        return 'Please enter your name';
                       return null;
                     },
                   ),
@@ -159,7 +163,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     keyboardType: TextInputType.emailAddress,
                     errorText: _emailError,
                     validator: (value) {
-                      if (value == null || value.isEmpty) return 'Please enter your email';
+                      if (value == null || value.isEmpty)
+                        return 'Please enter your email';
                       if (!value.endsWith('@f-eng.tanta.edu.eg')) {
                         return 'Must be a Tanta Engineering email \n(@f-eng.tanta.edu.eg)';
                       }
@@ -176,7 +181,8 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     prefixIcon: Icons.phone,
                     keyboardType: TextInputType.phone,
                     validator: (value) {
-                      if (value == null || value.isEmpty) return 'Please enter your phone number';
+                      if (value == null || value.isEmpty)
+                        return 'Please enter your phone number';
                       if (!phoneRegex.hasMatch(value)) {
                         return 'Invalid phone format (e.g., 01xxxxxxxxx)';
                       }
@@ -194,7 +200,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     obscureText: _obscurePassword,
                     suffixIcon: IconButton(
                       icon: Icon(
-                        _obscurePassword ? Icons.visibility_off : Icons.visibility,
+                        _obscurePassword
+                            ? Icons.visibility_off
+                            : Icons.visibility,
                         color: Colors.grey[600],
                       ),
                       onPressed: () {
@@ -204,9 +212,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       },
                     ),
                     validator: (value) {
-                      if (value == null || value.isEmpty) return 'Please enter password';
+                      if (value == null || value.isEmpty)
+                        return 'Please enter password';
                       if (!passwordRegex.hasMatch(value)) {
-                         return 'Min 8 chars, 1 uppercase, 1 lowercase, 1 number';
+                        return 'Min 8 chars, 1 uppercase, 1 lowercase, 1 number';
                       }
                       return null;
                     },
@@ -220,9 +229,11 @@ class _RegisterScreenState extends State<RegisterScreen> {
                     showLabelAbove: false,
                     prefixIcon: Icons.lock,
                     obscureText: _obscureConfirmPassword,
-                     suffixIcon: IconButton(
+                    suffixIcon: IconButton(
                       icon: Icon(
-                        _obscureConfirmPassword ? Icons.visibility_off : Icons.visibility,
+                        _obscureConfirmPassword
+                            ? Icons.visibility_off
+                            : Icons.visibility,
                         color: Colors.grey[600],
                       ),
                       onPressed: () {
@@ -232,8 +243,10 @@ class _RegisterScreenState extends State<RegisterScreen> {
                       },
                     ),
                     validator: (value) {
-                      if (value == null || value.isEmpty) return 'Please confirm password';
-                      if (value != _passwordController.text) return 'Passwords do not match';
+                      if (value == null || value.isEmpty)
+                        return 'Please confirm password';
+                      if (value != _passwordController.text)
+                        return 'Passwords do not match';
                       return null;
                     },
                   ),
@@ -251,20 +264,20 @@ class _RegisterScreenState extends State<RegisterScreen> {
                         ),
                         elevation: 0,
                       ),
-                      child: _isLoading 
-                        ? const SizedBox(
-                            width: 20, 
-                            height: 20, 
-                            child: CircularProgressIndicator(color: Colors.white, strokeWidth: 2)
-                          )
-                        : const Text(
-                          'Register',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
-                        ),
+                      child: _isLoading
+                          ? const SizedBox(
+                              width: 20,
+                              height: 20,
+                              child: CircularProgressIndicator(
+                                  color: Colors.white, strokeWidth: 2))
+                          : const Text(
+                              'Register',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,
+                              ),
+                            ),
                     ),
                   ),
                   const SizedBox(height: 24),
@@ -283,14 +296,14 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           if (Navigator.canPop(context)) {
                             Navigator.pop(context);
                           } else {
-                             Navigator.pushReplacementNamed(context, AppRoutes.login);
+                            Navigator.pushReplacementNamed(
+                                context, AppRoutes.login);
                           }
                         },
                         child: Text(
                           'Sign In',
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
-      
                             color: Theme.of(context).primaryColor,
                             fontSize: 14,
                           ),

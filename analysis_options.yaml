@@ -1,1 +1,10 @@
 include: package:flutter_lints/flutter.yaml
+
+linter:
+  rules:
+    # Disable style warnings that don't affect functionality
+    prefer_const_constructors: false
+    prefer_const_literals_to_create_immutables: false
+    no_leading_underscores_for_local_identifiers: false
+    unnecessary_to_list_in_spreads: false
+    curly_braces_in_flow_control_structures: false

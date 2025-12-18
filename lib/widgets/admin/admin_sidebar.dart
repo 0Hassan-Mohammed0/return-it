@@ -28,19 +28,22 @@ class AdminSidebar extends StatelessWidget {
               ),
             ),
           ),
-          _buildNavItem(context, AppRoutes.dashboard, 'Dashboard', Icons.dashboard),
+          _buildNavItem(
+              context, AppRoutes.dashboard, 'Dashboard', Icons.dashboard),
           _buildNavItem(context, AppRoutes.users, 'Users', Icons.people),
           _buildNavItem(context, AppRoutes.items, 'Items', Icons.inventory_2),
           // _buildNavItem(context, '/reports', 'Reports', Icons.flag), // Placeholder
           const Spacer(),
           // _buildNavItem(context, '/settings', 'Settings', Icons.settings), // Placeholder
-           ListTile(
+          ListTile(
             leading: const Icon(Icons.logout, color: Colors.white70),
-            title: const Text('Logout', style: TextStyle(color: Colors.white70)),
+            title:
+                const Text('Logout', style: TextStyle(color: Colors.white70)),
             onTap: () async {
               await FirebaseAuth.instance.signOut();
               if (context.mounted) {
-                 Navigator.pushNamedAndRemoveUntil(context, AppRoutes.login, (route) => false);
+                Navigator.pushNamedAndRemoveUntil(
+                    context, AppRoutes.login, (route) => false);
               }
             },
           ),
@@ -50,7 +53,8 @@ class AdminSidebar extends StatelessWidget {
     );
   }
 
-  Widget _buildNavItem(BuildContext context, String route, String title, IconData icon) {
+  Widget _buildNavItem(
+      BuildContext context, String route, String title, IconData icon) {
     final isSelected = currentRoute == route;
     return ListTile(
       leading: Icon(
@@ -64,7 +68,7 @@ class AdminSidebar extends StatelessWidget {
           fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
         ),
       ),
-      tileColor: isSelected ? Colors.white.withOpacity(0.1) : null,
+      tileColor: isSelected ? Colors.white.withValues(alpha: 0.1) : null,
       onTap: () {
         if (!isSelected) {
           Navigator.pushReplacementNamed(context, route);

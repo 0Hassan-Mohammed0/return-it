@@ -30,8 +30,12 @@ class _SplashPageState extends State<SplashPage> {
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              // Placeholder Logo if asset not ready, or Text
-              const Icon(Icons.find_in_page_rounded, size: 80, color: Color(0xFF000B58)),
+              // Logo
+              Image.asset(
+                'assets/images/logo.png',
+                width: 120, // Adjust size as needed
+                height: 120,
+              ),
               const SizedBox(height: 16),
               const Text(
                 'ReturnIt',

@@ -31,7 +31,7 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
               borderRadius: BorderRadius.circular(12),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.05),
+                  color: Colors.black.withValues(alpha: 0.05),
                   blurRadius: 10,
                   offset: const Offset(0, 4),
                 ),
@@ -47,7 +47,8 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
                       border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(8),
                       ),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 16),
+                      contentPadding:
+                          const EdgeInsets.symmetric(horizontal: 16),
                     ),
                   ),
                 ),
@@ -62,9 +63,12 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
                     child: DropdownButton<String>(
                       value: 'All',
                       items: const [
-                        DropdownMenuItem(value: 'All', child: Text('All Status')),
-                        DropdownMenuItem(value: 'Active', child: Text('Active')),
-                        DropdownMenuItem(value: 'Banned', child: Text('Banned')),
+                        DropdownMenuItem(
+                            value: 'All', child: Text('All Status')),
+                        DropdownMenuItem(
+                            value: 'Active', child: Text('Active')),
+                        DropdownMenuItem(
+                            value: 'Banned', child: Text('Banned')),
                       ],
                       onChanged: (value) {},
                     ),
@@ -82,7 +86,7 @@ class _AdminUsersScreenState extends State<AdminUsersScreen> {
                 borderRadius: BorderRadius.circular(12),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withOpacity(0.05),
+                    color: Colors.black.withValues(alpha: 0.05),
                     blurRadius: 10,
                     offset: const Offset(0, 4),
                   ),
